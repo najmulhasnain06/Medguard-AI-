@@ -1,4 +1,4 @@
-/**
+/** 
  * MedGuard AI -- Express Backend Server
  *
  * This server acts as a secure proxy between the React frontend and
@@ -560,6 +560,18 @@ Return ONLY the JSON object. Do not include any text before or after the JSON.`
       error: `Internal server error: ${error.message}`,
     })
   }
+})
+// ---- Serve the production frontend ----
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+app.use(express.static(path.join(__dirname, 'dist')))
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'))
 })
 
 // ---- Start server ----
