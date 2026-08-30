@@ -8,6 +8,21 @@
   body {
     @apply font-sans;
   }
+
+  /* Urdu font stack using Noto Nastaliq Urdu (Google Fonts) */
+  .font-urdu {
+    font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', serif;
+    line-height: 2;
+  }
+
+  /* RTL adjustments */
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  [dir="rtl"] .text-right {
+    text-align: left;
+  }
 }
 
 /* Custom component utilities */

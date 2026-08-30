@@ -34,6 +34,7 @@ function fileToBase64(file) {
  * Analyse a medicine packaging image using the real AI backend.
  *
  * @param {File} imageFile - The image file uploaded by the user
+ * @param {string} language - Language code ('en' or 'ur')
  * @returns {Promise<object>} Risk assessment with the structure:
  *   {
  *     riskLevel: "LOW_CONCERN" | "NEEDS_VERIFICATION" | "HIGH_CONCERN",
@@ -47,7 +48,7 @@ function fileToBase64(file) {
  *     disclaimer: string
  *   }
  */
-export async function analyzeImage(imageFile) {
+export async function analyzeImage(imageFile, language = 'en') {
   // 1. Validate input
   if (!imageFile) {
     throw new Error('No image provided. Please upload a medicine packaging photo.')
@@ -60,11 +61,11 @@ export async function analyzeImage(imageFile) {
   // 2. Convert the file to base64
   const base64DataUrl = await fileToBase64(imageFile)
 
-  // 3. Send to our backend API
+  // 3. Send to our backend API with language parameter
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageBase64: base64DataUrl }),
+    body: JSON.stringify({ imageBase64: base64DataUrl, language }),
   })
 
   // 4. Handle HTTP errors

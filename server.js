@@ -72,12 +72,14 @@ app.post('/api/analyze', async (req, res) => {
     }
 
     // 2. Validate the incoming request
-    const { imageBase64 } = req.body
+    const { imageBase64, language } = req.body
     if (!imageBase64 || typeof imageBase64 !== 'string') {
       return res.status(400).json({
         error: 'No image provided. Please upload a medicine packaging image.',
       })
     }
+
+    const isUrdu = language === 'ur'
 
     // 3. Build the data URL from the base64 string
     //    The frontend sends base64 without the data:... prefix, so we add it.
@@ -86,7 +88,69 @@ app.post('/api/analyze', async (req, res) => {
       : `data:image/jpeg;base64,${imageBase64}`
 
     // 4. Build the prompt that instructs Qwen to analyse medicine packaging
-    const analysisPrompt = `You are a medicine packaging analysis assistant. You will analyse the provided image of medicine packaging and return a structured JSON response.
+    const analysisPrompt = isUrdu
+      ? `آپ ایک ادویات کی پیکنگ کے تجزیہ کے معاون ہیں۔ آپ فراہم کردہ ادویات کی پیکنگ کی تصویر کا تجزیہ کریں گے اور ایک ساختی JSON جواب واپس کریں گے۔
+
+اہم حفاظتی قواعد:
+- آپ کو کبھی بھی یہ دعویٰ نہیں کرنا چاہیے کہ کوئی دوا صرف تصویر کی بنیاد پر یقینی طور پر جعلی، نقلی، اصلی یا مستند ہے۔
+- آپ کو اپنے نتائج کو صرف اسکریننگ اسسمنٹ کے طور پر بیان کرنا چاہیے۔
+- آپ کی رسک درجہ بندی صرف نظر آنے والے ثبوت اور غیر یقینی صورتحال پر مبنی ہونی چاہیے۔
+
+تصویر کا احتیاط سے تجزیہ کریں اور درج ذیل معلومات نکالیں۔ اگر کوئی چیز نظر نہیں آ رہی یا پڑھنے کے قابل نہیں ہے، تو واضح طور پر "نظر نہیں آیا" یا "پڑھنے کے قابل نہیں" لکھیں۔
+
+اپنا جواب ایک JSON آبجیکٹ کے طور پر واپس کریں جس میں بالکل یہ ساخت ہو (کوئی مارک ڈاؤن نہیں، کوئی کوڈ فینس نہیں، صرف خام JSON):
+
+{
+  "extractedInfo": {
+    "medicineName": "برانڈ نام اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "activeIngredient": "جنرک/فعال جزو اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "strength": "خوراک کی طاقت اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "manufacturer": "مینوفیکچرر کا نام اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "batchNumber": "بیچ/لاٹ نمبر اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "manufacturingDate": "مینوفیکچرنگ کی تاریخ اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "expiryDate": "ایکسپائری کی تاریخ اگر پڑھنے کے قابل ہو، ورنہ پڑھنے کے قابل نہیں",
+    "registrationInfo": "رجسٹریشن نمبر/معلومات اگر نظر آئیں، ورنہ نظر نہیں آیا",
+    "barcodeVisible": true یا false,
+    "qrCodeVisible": true یا false
+  },
+  "observations": [
+    "متن/پرنٹنگ کے معیار کے بارے میں مشاہدہ",
+    "پیکنگ کی حالت کے بارے میں مشاہدہ",
+    "سیکیورٹی فیچرز کے بارے میں مشاہدہ",
+    "رنگ اور ڈیزائن کی مستقل مزاجی کے بارے میں مشاہدہ",
+    "کوئی اور قابل ذکر مشاہدہ"
+  ],
+  "concerns": [
+    "کوئی نظر آنے والی بے ضابطگیاں یا انتباہی علامات، یا کچھ نظر نہیں آیا"
+  ],
+  "missingInfo": [
+    "ایسی معلومات کی فہرست جو نظر نہیں آئیں یا طے نہیں کی جا سکیں"
+  ],
+  "confidence": "high | medium | low",
+  "riskLevel": "LOW_CONCERN | NEEDS_VERIFICATION | HIGH_CONCERN",
+  "riskReasons": [
+    "رسک درجہ بندی کی وجہ 1",
+    "وجہ 2"
+  ],
+  "recommendations": [
+    "مخصوص سفارش 1",
+    "مخصوص سفارش 2"
+  ]
+}
+
+رسک درجہ بندی کی رہنما خطوط:
+- LOW_CONCERN: تمام کلیدی معلومات واضح طور پر پڑھنے کے قابل ہیں، پیکنگ مکمل اور مستقل نظر آتی ہے، کوئی نظر آنے والی انتباہی علامات نہیں۔ پھر بھی فارماسسٹ سے تصدیق کی سفارش کریں۔
+- NEEDS_VERIFICATION: کچھ معلومات جزوی طور پر پڑھنے کے قابل ہیں یا غائب ہیں، کچھ مشاہدات مکمل طور پر نہیں کیے جا سکے، تصویر کا معیار تشخیص کو محدود کرتا ہے، یا معمولی بے ضابطگیاں نوٹ کی گئی ہیں۔
+- HIGH_CONCERN: متعدد اہم نظر آنے والی انتباہی علامات جیسے واضح طور پر دھندلا/غیر ہم آہنگ متن، غائب اہم معلوماتی فیلڈز جہاں وہ نظر آنی چاہئیں، واضح پرنٹنگ کے معیار کے مسائل، یا مشکوک پیکنگ کی خصوصیات۔
+
+ہمیشہ یہ سفارشات شامل کریں جہاں مناسب ہو:
+- لائسنس یافتہ فارماسسٹ سے تصدیق کریں
+- اگر بیچ نمبر دستیاب ہو تو مینوفیکچرر سے چیک کریں
+- خدشات کی اطلاع ڈرگ ریگولیٹری اتھارٹی آف پاکستان (DRAP) کو دیں
+- ادویات صرف لائسنس یافتہ فارمیسیوں سے خریدیں
+
+صرف JSON آبجیکٹ واپس کریں۔ JSON سے پہلے یا بعد میں کوئی متن شامل نہ کریں۔`
+      : `You are a medicine packaging analysis assistant. You will analyse the provided image of medicine packaging and return a structured JSON response.
 
 IMPORTANT SAFETY RULES:
 - You MUST NEVER claim that a medicine is definitely fake, counterfeit, genuine, or authentic based only on an image.
@@ -245,17 +309,24 @@ Return ONLY the JSON object. Do not include any text before or after the JSON.`
     }
 
     // 10. Build the response in the format the frontend expects
+    const disclaimerText = isUrdu
+      ? 'یہ صرف اسکریننگ اسسمنٹ ہے۔ یہ ٹول تصدیق نہیں کر سکتا کہ دوا اصلی ہے یا نقلی۔ ہمیشہ اہل ہیلتھ کیئر پیشہ ور یا فارماسسٹ سے مشورہ کریں۔'
+      : 'This is a screening assessment only. This tool cannot confirm whether a medicine is genuine or counterfeit. Always consult a qualified healthcare professional or pharmacist.'
+
+    const confidenceText = isUrdu
+      ? `صرف اسکریننگ اسسمنٹ (اعتماد: ${analysis.confidence || 'نامعلوم'})`
+      : `Screening assessment only (confidence: ${analysis.confidence || 'unknown'})`
+
     const result = {
       riskLevel: analysis.riskLevel,
-      confidence: `Screening assessment only (confidence: ${analysis.confidence || 'unknown'})`,
+      confidence: confidenceText,
       extractedInfo: analysis.extractedInfo || {},
       reasons: analysis.riskReasons || [],
       recommendations: analysis.recommendations || [],
       observations: analysis.observations || [],
       concerns: analysis.concerns || [],
       missingInfo: analysis.missingInfo || [],
-      disclaimer:
-        'This is a screening assessment only. This tool cannot confirm whether a medicine is genuine or counterfeit. Always consult a qualified healthcare professional or pharmacist.',
+      disclaimer: disclaimerText,
     }
 
     console.log(`Analysis complete. Risk level: ${result.riskLevel}`)
@@ -281,7 +352,7 @@ app.post('/api/search-medicine', async (req, res) => {
     }
 
     // 2. Validate request
-    const { query } = req.body
+    const { query, language } = req.body
     if (!query || typeof query !== 'string' || query.trim().length < 2) {
       return res.status(400).json({
         error: 'Please provide a medicine name to search (at least 2 characters).',
@@ -289,10 +360,59 @@ app.post('/api/search-medicine', async (req, res) => {
     }
 
     const medicineQuery = query.trim()
-    console.log(`Searching medicine info for: "${medicineQuery}"`)
+    const isUrdu = language === 'ur'
+    console.log(`Searching medicine info for: "${medicineQuery}" (language: ${language || 'en'})`)
 
     // 3. Build the prompt for structured medicine information
-    const searchPrompt = `You are a pharmaceutical information assistant. Provide general, factual information about the medicine: "${medicineQuery}".
+    const searchPrompt = isUrdu
+      ? `آپ ایک فارماسیوٹیکل معلومات کے معاون ہیں۔ دوا کے بارے میں عمومی، حقائق پر مبنی معلومات فراہم کریں: "${medicineQuery}"۔
+
+اہم حفاظتی قواعد:
+1. صرف عمومی معلومات -- صرف عوامی طور پر دستیاب، عمومی فارماسیوٹیکل معلومات فراہم کریں۔
+2. کوئی تشخیص نہیں -- کسی بھی حالت کی تشخیص نہ کریں یا یہ تجویز نہ کریں کہ صارف کو کوئی مخصوص بیماری ہے۔
+3. کوئی نسخہ نہیں -- علاج کی تجویز نہ کریں یا صارف کو مخصوص دوا لینے کی سفارش نہ کریں۔
+4. کوئی ذاتی خوراک نہیں -- ذاتی خوراک کی ہدایات نہ دیں۔ خوراک کو واضح طور پر "عمومی/حوالہ جاتی معلومات" کے طور پر لیبل کیا جانا چاہیے اور ذاتی خوراک کے لیے سرکاری دوا کے پمفلٹ کی جانچ یا فارماسسٹ سے مشورہ کرنے کا مشورہ دینا چاہیے۔
+5. کوئی بنائے گئے ذرائع نہیں -- URLs، ذرائع کے نام ایجاد نہ کریں یا سرکاری ڈیٹا بیس چیک کرنے کا دعویٰ نہ کریں۔
+6. غیر یقینی -- اگر آپ دوا کی شناخت کے بارے میں پراعتماد نہیں ہیں، تو "identified" کو false سیٹ کریں۔
+7. ابہام -- اگر سوال مبہم ہے، تو سب سے عام تشریح کو ترجیح دیں۔
+8. سیاق و سباق -- یہ معلومات پاکستانی فارماسیوٹیکل مارکیٹ کے سیاق و سباق کے لیے ہیں۔
+
+اپنا جواب ایک JSON آبجیکٹ کے طور پر واپس کریں جس میں بالکل یہ ساخت ہو (کوئی مارک ڈاؤن نہیں، صرف خام JSON):
+
+{
+  "identified": true,
+  "name": "مکمل دوا کا نام طاقت کے ساتھ",
+  "activeIngredient": "فعال جزو/اجزاء",
+  "uses": [
+    "عام استعمال 1",
+    "عام استعمال 2",
+    "عام استعمال 3"
+  ],
+  "dosage": "عمومی خوراک کی معلومات ایک پیراگراف کے طور پر۔ لازمی طور پر شامل کریں: 'یہ عمومی حوالہ جاتی معلومات ہیں۔ ذاتی خوراک کے لیے سرکاری دوا کا پمفلٹ چیک کریں یا فارماسسٹ سے مشورہ کریں۔'",
+  "precautions": [
+    "احتیاطی تدبیر 1",
+    "احتیاطی تدبیر 2",
+    "احتیاطی تدبیر 3"
+  ],
+  "sideEffects": [
+    "عام ضمنی اثر 1",
+    "عام ضمنی اثر 2",
+    "عام ضمنی اثر 3"
+  ],
+  "interactions": [
+    "تعامل 1",
+    "تعامل 2",
+    "تعامل 3"
+  ],
+  "storage": "عمومی ذخیرہ کی ہدایات ایک جملے کے طور پر۔",
+  "sources": []
+}
+
+"sources" ایرے خالی ہونی چاہیے -- URLs یا ذرائع کے نام ایجاد نہ کریں۔
+"identified" فیلڈ false ہونی چاہیے اگر آپ دوا کی باقاعدہ شناخت نہیں کر سکتے۔
+اگر "identified" false ہے، تو پھر بھی بہترین دستیاب معلومات فراہم کریں لیکن فرنٹ اینڈ ایک انتباہ دکھائے گا۔
+صرف JSON آبجیکٹ واپس کریں۔`
+      : `You are a pharmaceutical information assistant. Provide general, factual information about the medicine: "${medicineQuery}".
 
 CRITICAL SAFETY RULES:
 1. GENERAL INFORMATION ONLY -- Provide only publicly available, general pharmaceutical information.

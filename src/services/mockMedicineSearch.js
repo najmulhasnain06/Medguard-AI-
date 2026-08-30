@@ -37,9 +37,10 @@ export async function searchMedicines(query) {
  * Searches local database first, then falls back to the AI backend.
  *
  * @param {string} identifier - Medicine ID (for local) or search query (for AI)
+ * @param {string} language - Language code ('en' or 'ur')
  * @returns {Promise<object|null>} Medicine info object, or null if truly not found
  */
-export async function getMedicineByIdentifier(identifier) {
+export async function getMedicineByIdentifier(identifier, language = 'en') {
   // Simulate small delay for local lookup
   await new Promise((resolve) => setTimeout(resolve, 100))
 
@@ -64,7 +65,7 @@ export async function getMedicineByIdentifier(identifier) {
     const response = await fetch('/api/search-medicine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, language }),
     })
 
     if (!response.ok) {

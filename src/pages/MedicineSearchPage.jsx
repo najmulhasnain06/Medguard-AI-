@@ -4,6 +4,7 @@ import { Search as SearchIcon, Clock, X, Sparkles } from 'lucide-react'
 import Card from '../components/ui/Card'
 import SearchBar from '../components/ui/SearchBar'
 import { searchMedicines } from '../services/mockMedicineSearch'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function MedicineSearchPage() {
   const [query, setQuery] = useState('')
@@ -13,6 +14,7 @@ export default function MedicineSearchPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const wrapperRef = useRef(null)
+  const { t } = useLanguage()
 
   // Search for suggestions as the user types
   useEffect(() => {
@@ -80,13 +82,13 @@ export default function MedicineSearchPage() {
       {/* Page header */}
       <div className="text-center mb-8">
         <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <SearchIcon className="w-7 h-7 text-primary-600" />
+          <SearchIcon className="w-7 h-7 text-primary-600" aria-hidden="true" />
         </div>
         <h1 className="text-2xl font-bold text-slate-800 mb-2">
-          Search Medicine Information
+          {t('search.title')}
         </h1>
         <p className="text-slate-500">
-          Look up general information about common medicines available in Pakistan
+          {t('search.subtitle')}
         </p>
       </div>
 
@@ -99,7 +101,7 @@ export default function MedicineSearchPage() {
             setShowSuggestions(true)
           }}
           onSubmit={handleSubmit}
-          placeholder="Type a medicine name (e.g. Panadol, Brufen)..."
+          placeholder={t('search.placeholder')}
         />
 
         {/* Suggestions dropdown */}
@@ -122,14 +124,14 @@ export default function MedicineSearchPage() {
         {showSuggestions && query.length >= 2 && !loading && suggestions.length === 0 && (
           <Card className="absolute top-full left-0 right-0 mt-2 z-10" padding="p-4">
             <p className="text-sm text-slate-500 text-center mb-2">
-              No local match for "{query}".
+              {t('search.noLocalMatch')} "{query}".
             </p>
             <button
               onClick={handleSubmit}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors"
             >
-              <Sparkles className="w-4 h-4" />
-              Search with AI
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
+              {t('search.searchWithAI')}
             </button>
           </Card>
         )}
@@ -139,8 +141,8 @@ export default function MedicineSearchPage() {
       {recentSearches.length > 0 && (
         <div className="mb-8">
           <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Recent Searches
+            <Clock className="w-4 h-4" aria-hidden="true" />
+            {t('search.recentSearches')}
           </h2>
           <div className="flex flex-wrap gap-2">
             {recentSearches.map((id) => (
@@ -166,7 +168,7 @@ export default function MedicineSearchPage() {
       {/* Popular medicines quick access */}
       <div>
         <h2 className="text-sm font-semibold text-slate-700 mb-3">
-          Popular Medicines
+          {t('search.popularMedicines')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {[

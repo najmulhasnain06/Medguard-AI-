@@ -5,15 +5,17 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import FileUpload from '../components/ui/FileUpload'
 import Disclaimer from '../components/ui/Disclaimer'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function ScanMedicinePage() {
   const [selectedFile, setSelectedFile] = useState(null)
   const navigate = useNavigate()
+  const { t, language } = useLanguage()
 
   function handleAnalyze() {
     if (!selectedFile) return
-    // Navigate to analysis page, passing the file via router state
-    navigate('/analysis', { state: { imageFile: selectedFile } })
+    // Navigate to analysis page, passing the file and language via router state
+    navigate('/analysis', { state: { imageFile: selectedFile, language } })
   }
 
   return (
@@ -21,13 +23,13 @@ export default function ScanMedicinePage() {
       {/* Page header */}
       <div className="text-center mb-8">
         <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Camera className="w-7 h-7 text-primary-600" />
+          <Camera className="w-7 h-7 text-primary-600" aria-hidden="true" />
         </div>
         <h1 className="text-2xl font-bold text-slate-800 mb-2">
-          Scan Medicine Packaging
+          {t('scan.title')}
         </h1>
         <p className="text-slate-500">
-          Upload a clear photo of medicine packaging for an AI risk assessment
+          {t('scan.subtitle')}
         </p>
       </div>
 
@@ -39,14 +41,14 @@ export default function ScanMedicinePage() {
       {/* Tips */}
       <Card className="mb-6" padding="p-4">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <p className="font-medium text-slate-700 text-sm mb-2">Tips for best results:</p>
+            <p className="font-medium text-slate-700 text-sm mb-2">{t('scan.tipsTitle')}</p>
             <ul className="text-sm text-slate-500 space-y-1">
-              <li>&#8226; Take a clear photo of the full package in good lighting</li>
-              <li>&#8226; Make sure text, brand name, and barcode are visible</li>
-              <li>&#8226; Include the expiry date and batch number area if possible</li>
-              <li>&#8226; Avoid blurry or dark images</li>
+              <li>&#8226; {t('scan.tip1')}</li>
+              <li>&#8226; {t('scan.tip2')}</li>
+              <li>&#8226; {t('scan.tip3')}</li>
+              <li>&#8226; {t('scan.tip4')}</li>
             </ul>
           </div>
         </div>
@@ -59,13 +61,13 @@ export default function ScanMedicinePage() {
         disabled={!selectedFile}
         className="w-full"
       >
-        <Camera className="w-5 h-5" />
-        Analyse Packaging
+        <Camera className="w-5 h-5" aria-hidden="true" />
+        {t('scan.analyseButton')}
       </Button>
 
       {/* Disclaimer */}
       <div className="mt-6">
-        <Disclaimer text="This tool provides screening-level risk assessment only. It cannot confirm whether a medicine is genuine or counterfeit." />
+        <Disclaimer text={t('scan.disclaimer')} />
       </div>
     </div>
   )
