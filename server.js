@@ -575,21 +575,26 @@ app.get('*', (req, res) => {
 })
 
 // ---- Start server ----
-app.listen(PORT, () => {
-  console.log('')
-  console.log('=== MedGuard AI Backend Server ===')
-  console.log(`  Server running on:   http://localhost:${PORT}`)
-  console.log(`  API endpoint:        POST http://localhost:${PORT}/api/analyze`)
-  console.log(`  Health check:        GET  http://localhost:${PORT}/api/health`)
-  console.log(`  DashScope base URL:  ${DASHSCOPE_BASE_URL}`)
-  console.log(`  Medicine search:     POST http://localhost:${PORT}/api/search-medicine`)
-  console.log(`  Vision model:        ${VISION_MODEL}`)
-  console.log(`  Text model:          ${TEXT_MODEL}`)
-  console.log(`  API key configured:  ${API_KEY ? 'Yes' : 'NO -- set DASHSCOPE_API_KEY in .env'}`)
-  console.log('')
-  if (!API_KEY) {
-    console.log('  WARNING: DASHSCOPE_API_KEY is not set!')
-    console.log('  Copy .env.example to .env and add your API key.')
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
     console.log('')
-  }
-})
+    console.log('=== MedGuard AI Backend Server ===')
+    console.log(`  Server running on:   http://localhost:${PORT}`)
+    console.log(`  API endpoint:        POST http://localhost:${PORT}/api/analyze`)
+    console.log(`  Health check:        GET  http://localhost:${PORT}/api/health`)
+    console.log(`  DashScope base URL:  ${DASHSCOPE_BASE_URL}`)
+    console.log(`  Medicine search:     POST http://localhost:${PORT}/api/search-medicine`)
+    console.log(`  Vision model:        ${VISION_MODEL}`)
+    console.log(`  Text model:          ${TEXT_MODEL}`)
+    console.log(`  API key configured:  ${API_KEY ? 'Yes' : 'NO -- set DASHSCOPE_API_KEY in .env'}`)
+    console.log('')
+
+    if (!API_KEY) {
+      console.log('  WARNING: DASHSCOPE_API_KEY is not set!')
+      console.log('  Copy .env.example to .env and add your API key.')
+      console.log('')
+    }
+  })
+}
+
+export default app
